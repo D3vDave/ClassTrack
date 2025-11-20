@@ -1,0 +1,1585 @@
+/* Reset + Layout */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f7f8fa;
+  display: flex;
+}
+
+.dashboard {
+  display: flex;
+  width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background: #fff;
+  height: 100vh;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.profile {
+  text-align: center;
+}
+.profile img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+.profile h3 {
+  margin: 10px 0 5px;
+}
+.role {
+  font-size: 13px;
+  color: #555;
+  background: #eee;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin-top: 30px;
+  flex-grow: 1;
+}
+.menu li, .menu li a {
+  padding: 12px;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  text-decoration: none;
+}
+.menu li.active, .menu li:hover, .menu li a:hover {
+  background: #1a73e8;
+  color: #fff;
+}
+
+/* Fixed logout styling */
+.menu .logout-item, 
+.menu .logout-item a {
+  color: red;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  text-decoration: none;
+}
+.menu .logout-item:hover, 
+.menu .logout-item a:hover {
+  background: #ffe6e6;
+  color: darkred;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.btn-add {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-add:hover {
+  background: #0d62c9;
+}
+
+/* Dashboard Cards */
+.cards {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.card h3 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+.class-box {
+  background: #f0f6ff;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.class-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.class-box h4 {
+  margin: 0 0 5px 0;
+  color: #1a73e8;
+}
+.class-box p {
+  margin: 5px 0;
+  color: #555;
+}
+.tag, .day {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 5px;
+}
+.tag {
+  background: #e0f7e9;
+  color: #2e7d32;
+}
+.day {
+  background: #e3e9ff;
+  color: #1a73e8;
+}
+
+/* Weekly Schedule */
+.schedule-table {
+  margin-top: 30px;
+}
+.schedule-table h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+.schedule-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.schedule-table th, 
+.schedule-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
+.schedule-table th {
+  background: #1a73e8;
+  color: white;
+  font-weight: 600;
+}
+.schedule-table tr:last-child td {
+  border-bottom: none;
+}
+.schedule-table tr:hover {
+  background: #f9f9f9;
+}
+
+/* Modal Background */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 450px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.close {
+  cursor: pointer;
+  font-size: 24px;
+  color: #999;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.close:hover {
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.form-actions button[type="button"] {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  color: #555;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #e0e0e0;
+}
+
+.form-actions button[type="submit"] {
+  background: #1a73e8;
+  border: none;
+  color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: #0d62c9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ensure the modal is centered */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Font Awesome icon alignment */
+.menu li i {
+  width: 20px;
+  text-align: center;
+}
+
+/* Color selection options */
+.color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.color-option {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.color-option.selected {
+  border: 2px solid #333;
+  transform: scale(1.1);
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.color-custom input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.color-preview {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+/* Weekly timetable view */
+.weekly-view {
+  margin-top: 30px;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.week-days {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 1px;
+  background-color: #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.day-header {
+  background: #1a73e8;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.time-header {
+  background: #f0f0f0;
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.time-slot {
+  background: #f9f9f9;
+  padding: 5px;
+  min-height: 60px;
+  position: relative;
+}
+
+.schedule-item {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #333;
+  cursor: pointer;
+}
+
+.schedule-item h4 {
+  margin: 0 0 3px 0;
+  font-size: 12px;
+}
+
+.schedule-item p {
+  margin: 2px 0;
+  font-size: 11px;
+}
+
+/* Toggle view buttons */
+.view-toggle {
+  display: flex;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.view-toggle button {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  background: #f0f0f0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .week-days {
+    grid-template-columns: 60px repeat(7, 1fr);
+    font-size: 12px;
+  }
+  
+  .time-header, .day-header {
+    padding: 5px;
+  }
+}
+
+/* Alert messages */
+.alert {
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.alert.success {
+  background-color: #e0f7e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.alert.error {
+  background-color: #ffe6e6;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+/* Modal styles for schedule details */
+.schedule-details-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.schedule-details-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.schedule-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.schedule-actions button {
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-edit {
+  background: #1a73e8;
+  color: white;
+  border: none;
+}
+
+.btn-announcement {
+  background: #2e7d32;
+  color: white;
+  border: none;
+}
+
+.btn-delete {
+  background: #d32f2f;
+  color: white;
+  border: none;
+}
+
+.btn-close {
+  background: #f0f0f0;
+  color: #555;
+  border: 1px solid #ddd;
+}
+
+/* Announcements section */
+.announcements-section {
+  margin-top: 30px;
+}
+
+.announcement-item {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-left: 4px solid #1a73e8;
+}
+
+.announcement-item.important {
+  border-left-color: #d32f2f;
+  background: #fff9f9;
+}
+
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.announcement-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.announcement-date {
+  color: #777;
+  font-size: 0.9em;
+}
+
+.announcement-content {
+  color: #555;
+}
+
+.announcement-class {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #1a73e8;
+}
+
+/* Mini weekly view for dashboard */
+.mini-weekly-view {
+  margin-top: 20px;
+  font-size: 0.8em;
+}
+
+.mini-week-days {
+  display: grid;
+  grid-template-columns: 40px repeat(7, 1fr);
+  gap: 1px;
+  background-color: #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mini-day-header {
+  background: #1a73e8;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+
+.mini-time-header {
+  background: #f0f0f0;
+  padding: 5px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+
+.mini-time-slot {
+  background: #f9f9f9;
+  padding: 2px;
+  min-height: 30px;
+  position: relative;
+}
+
+.mini-schedule-item {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  padding: 2px;
+  border-radius: 3px;
+  font-size: 9px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  color: #333;
+  cursor: pointer;
+}
+
+.mini-schedule-item h4 {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.1;
+}
+
+.mini-schedule-item p {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1;
+}
+
+/* Centered schedule details */
+.centered-schedule-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.centered-schedule-details h3 {
+  margin-bottom: 15px;
+  color: #1a73e8;
+}
+
+.centered-schedule-details p {
+  margin: 5px 0;
+}
+
+.centered-schedule-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+/* Schedule Details Modal Styles */
+.schedule-details-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.centered-schedule-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.centered-schedule-details h3 {
+  margin-bottom: 15px;
+  color: #1a73e8;
+  font-size: 24px;
+  border-bottom: 2px solid #1a73e8;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.centered-schedule-details .details-table {
+  width: 100%;
+  margin: 15px 0;
+  border-collapse: collapse;
+}
+
+.centered-schedule-details .details-table th {
+  background-color: #f8f9fa;
+  padding: 10px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #dee2e6;
+}
+
+.centered-schedule-details .details-table td {
+  padding: 10px;
+  border: 1px solid #dee2e6;
+}
+
+.centered-schedule-details .details-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.centered-schedule-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-edit, .btn-delete, .btn-announcement, .btn-close {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-edit {
+  background: #1a73e8;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #0d62c9;
+  transform: translateY(-2px);
+}
+
+.btn-delete {
+  background: #d32f2f;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+}
+
+.btn-announcement {
+  background: #2e7d32;
+  color: white;
+}
+
+.btn-announcement:hover {
+  background: #1b5e20;
+  transform: translateY(-2px);
+}
+
+.btn-close {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-close:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Mini weekly view improvements */
+.mini-schedule-item {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  padding: 2px;
+  border-radius: 3px;
+  font-size: 9px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  color: #333;
+  cursor: pointer;
+  text-align: center;
+}
+
+.mini-schedule-item h4 {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.1;
+  font-weight: bold;
+}
+
+.mini-schedule-item p {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1;
+}
+
+/* Dashboard card improvements */
+.class-box {
+  background: #f0f6ff;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border-left: 4px solid #1a73e8;
+}
+
+.class-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Modal improvements */
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 450px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+/* Form improvements */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* Edit form specific styles */
+.edit-form-container {
+  display: none;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.edit-form-container.active {
+  display: block;
+}
+
+/* Weekly view improvements */
+.week-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.day-header {
+  background: #1a73e8;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.day-cell {
+  background: #f9f9f9;
+  min-height: 200px;
+  border-radius: 6px;
+  padding: 10px;
+  position: relative;
+}
+
+.schedule-item {
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  border-left: 4px solid #1a73e8;
+}
+
+.schedule-item h4 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.schedule-item p {
+  margin: 2px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Color options styling */
+.color-options {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.color-option {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.color-option.selected {
+  border: 2px solid #333;
+  transform: scale(1.1);
+}
+
+.edit-color-options {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.edit-color-option {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.edit-color-option.selected {
+  border: 2px solid #333;
+  transform: scale(1.1);
+}
+
+/* Unique Code Styles */
+.unique-code {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-top: 8px;
+    font-size: 0.85em;
+    font-family: 'Courier New', monospace;
+    border: 1px dashed #ccc;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.codes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.code-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.code-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.code-info strong {
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.code {
+    font-family: 'Courier New', monospace;
+    background: #e3e9ff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.btn-copy {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background 0.3s;
+}
+
+.btn-copy:hover {
+    background: #2980b9;
+}
+
+.btn-copy-code {
+    background: #9b59b6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+    transition: background 0.3s;
+}
+
+.btn-copy-code:hover {
+    background: #8e44ad;
+}
+
+/* Announcements section */
+.announcements-section {
+  margin-top: 30px;
+}
+
+.announcements-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #1a73e8;
+  padding-bottom: 10px;
+}
+
+.announcement-item {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 4px solid #1a73e8;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announcement-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.announcement-item.important {
+  border-left-color: #d32f2f;
+  background: #fff9f9;
+}
+
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.announcement-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 18px;
+  flex: 1;
+}
+
+.important-badge {
+  background: #d32f2f;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.announcement-date {
+  color: #777;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.announcement-content {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.announcement-class {
+  font-size: 0.9em;
+  color: #1a73e8;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.announcement-author {
+  font-size: 0.9em;
+  color: #666;
+  font-style: italic;
+}
+
+.no-announcements {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-announcements p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Announcement Modal Specific Styles */
+.announcement-modal .modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.announcement-form .form-group {
+  margin-bottom: 20px;
+}
+
+.announcement-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+.announcement-form input[type="text"],
+.announcement-form select,
+.announcement-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.announcement-form input[type="text"]:focus,
+.announcement-form select:focus,
+.announcement-form textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.announcement-form textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+}
+
+/* Checkbox styling */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  margin-right: 10px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+  background: #1a73e8;
+  border-color: #1a73e8;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.checkbox-label:hover .checkmark {
+  border-color: #1a73e8;
+}
+
+/* Character counter */
+.char-counter {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin-top: 5px;
+}
+
+.char-counter.warning {
+  color: #ff9800;
+}
+
+.char-counter.error {
+  color: #f44336;
+}
+
+/* Responsive design for announcements */
+@media (max-width: 768px) {
+  .announcement-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .announcement-date {
+    align-self: flex-start;
+  }
+  
+  .announcement-item {
+    padding: 15px;
+  }
+  
+  .announcement-modal .modal-content {
+    width: 95%;
+    margin: 10% auto;
+  }
+}
+
+/* ====== New Toggle Switch ====== */
+.toggle-important {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.toggle-important input {
+  appearance: none;
+  width: 45px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 50px;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.toggle-important input:checked {
+  background: #1a73e8;
+}
+
+.toggle-important input::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+
+.toggle-important input:checked::before {
+  transform: translateX(21px);
+}
+
+/* ====== Toast Notification ====== */
+#toast {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #1a73e8;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 12px;
+  position: fixed;
+  z-index: 2000;
+  left: 50%;
+  bottom: 30px;
+  font-weight: 500;
+  transition: all 0.5s;
+  opacity: 0;
+}
+
+#toast.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
+}
+
+/* Header Actions */
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-delete-all {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+}
+
+.btn-delete-all:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Bulk Actions - Keep the nice gradient but with red delete */
+.bulk-actions {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    animation: slideDown 0.3s ease-out;
+}
+
+.btn-bulk-delete {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+}
+
+.btn-bulk-delete:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.btn-bulk-cancel {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+}
+
+.btn-bulk-cancel:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Modal delete buttons - Make them red and consistent size */
+.form-actions .btn-delete {
+    background: #e74c3c;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-actions .btn-delete:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+/* Make cancel buttons consistent too */
+.form-actions button[type="button"] {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-actions button[type="button"]:hover {
+    background: #e9ecef;
+}
+
+/* Update the modal delete icons to be red */
+.modal-delete-icon i {
+    font-size: 48px;
+    color: #e74c3c;
+    margin-bottom: 15px;
+}
+
+/* For the delete all modal, make the warning icon orange */
+#deleteAllModal .modal-delete-icon i {
+    color: #f39c12;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-add,
+    .btn-delete-all,
+    .form-actions .btn-delete,
+    .form-actions button[type="button"] {
+        height: 48px;
+        padding: 12px 20px;
+    }
+    
+    .btn-bulk-delete,
+    .btn-bulk-cancel {
+        height: 44px;
+        padding: 10px 18px;
+    }
+}

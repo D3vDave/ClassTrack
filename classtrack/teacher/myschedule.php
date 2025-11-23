@@ -25,6 +25,95 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'teacher') {
 
 $teacher_id = $_SESSION['user_id'];
 
+// Function to check for schedule conflicts
+function checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time, $exclude_id = null) {
+    $sql = "SELECT * FROM class_schedules 
+            WHERE teacher_id = ? AND day = ? 
+            AND ((start_time < ? AND end_time > ?) OR 
+                 (start_time < ? AND end_time > ?) OR
+                 (start_time >= ? AND end_time <= ?))";
+    
+    $params = [$teacher_id, $day, $end_time, $start_time, $end_time, $start_time, $start_time, $end_time];
+    
+    if ($exclude_id) {
+        $sql .= " AND id != ?";
+        $params[] = $exclude_id;
+    }
+    
+    $stmt = $conn->prepare($sql);
+    
+    // Create type string based on number of parameters
+    $types = str_repeat("s", count($params));
+    $stmt->bind_param($types, ...$params);
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Function to check for teacher schedule conflicts
+function checkTeacherScheduleConflict($conn, $teacher_id, $exclude_id = null) {
+    $sql = "SELECT cs1.*, cs2.* 
+            FROM class_schedules cs1
+            JOIN class_schedules cs2 ON cs1.teacher_id = cs2.teacher_id
+            WHERE cs1.teacher_id = ? 
+            AND cs1.day = cs2.day 
+            AND cs1.id != cs2.id
+            AND ((cs1.start_time < cs2.end_time AND cs1.end_time > cs2.start_time))";
+    
+    $params = [$teacher_id];
+    
+    if ($exclude_id) {
+        $sql .= " AND cs1.id != ? AND cs2.id != ?";
+        $params[] = $exclude_id;
+        $params[] = $exclude_id;
+    }
+    
+    $sql .= " GROUP BY cs1.id, cs2.id";
+    
+    $stmt = $conn->prepare($sql);
+    
+    // Create type string based on number of parameters
+    $types = str_repeat("i", count($params));
+    if ($types) {
+        $stmt->bind_param($types, ...$params);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Handle dismissing conflict notification
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['dismiss_conflict_notification'])) {
+    $_SESSION['teacher_conflict_notification_dismissed'] = true;
+    $_SESSION['teacher_conflict_notification_dismissed_time'] = time();
+    header("Location: myschedule.php");
+    exit;
+}
+
+// Check if notification was dismissed (expires after 24 hours)
+$show_conflict_notification = true;
+if (isset($_SESSION['teacher_conflict_notification_dismissed']) && $_SESSION['teacher_conflict_notification_dismissed']) {
+    $dismissed_time = $_SESSION['teacher_conflict_notification_dismissed_time'] ?? 0;
+    $current_time = time();
+    $hours_passed = ($current_time - $dismissed_time) / 3600;
+    
+    // Show notification again after 24 hours
+    if ($hours_passed < 24) {
+        $show_conflict_notification = false;
+    } else {
+        // Reset dismissal after 24 hours
+        unset($_SESSION['teacher_conflict_notification_dismissed']);
+        unset($_SESSION['teacher_conflict_notification_dismissed_time']);
+    }
+}
+
+// Check for schedule conflicts
+$schedule_conflicts = checkTeacherScheduleConflict($conn, $teacher_id);
+
 // Handle form submission for creating schedule
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Handle announcement creation
@@ -71,34 +160,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (empty($section) || empty($subject_code) || empty($day) || empty($start_time) || empty($end_time) || empty($type) || empty($room)) {
             $error = "All fields are required!";
         } else {
-            // Check if building and campus columns exist before including them
-            $sql = "SHOW COLUMNS FROM class_schedules LIKE 'building'";
-            $result = $conn->query($sql);
-            $has_building = ($result->num_rows > 0);
-            
-            $sql = "SHOW COLUMNS FROM class_schedules LIKE 'campus'";
-            $result = $conn->query($sql);
-            $has_campus = ($result->num_rows > 0);
+            // Check for schedule conflicts
+            $conflicts = checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time, $schedule_id);
+            if (!empty($conflicts)) {
+                $error = "Schedule conflicts with existing classes: ";
+                foreach ($conflicts as $conflict) {
+                    $error .= $conflict['subject_code'] . " (" . $conflict['section'] . ") ";
+                }
+            } else {
+                // Check if building and campus columns exist before including them
+                $sql = "SHOW COLUMNS FROM class_schedules LIKE 'building'";
+                $result = $conn->query($sql);
+                $has_building = ($result->num_rows > 0);
+                
+                $sql = "SHOW COLUMNS FROM class_schedules LIKE 'campus'";
+                $result = $conn->query($sql);
+                $has_campus = ($result->num_rows > 0);
 
-            if ($has_building && $has_campus) {
-                $campus = $_POST['campus'] ?? '';
-                $building = $_POST['building'] ?? '';
-                $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, campus=?, building=?, room=?, color=? WHERE id=? AND teacher_id=?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $schedule_id, $teacher_id);
-            } else {
-                // Fallback without building and campus
-                $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, room=?, color=? WHERE id=? AND teacher_id=?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $schedule_id, $teacher_id);
-            }
-            
-            if ($stmt->execute()) {
-                $success = "Schedule updated successfully!";
-                header("Location: myschedule.php?success=1");
-                exit;
-            } else {
-                $error = "Error updating schedule: " . $conn->error;
+                if ($has_building && $has_campus) {
+                    $campus = $_POST['campus'] ?? '';
+                    $building = $_POST['building'] ?? '';
+                    $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, campus=?, building=?, room=?, color=? WHERE id=? AND teacher_id=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $schedule_id, $teacher_id);
+                } else {
+                    // Fallback without building and campus
+                    $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, room=?, color=? WHERE id=? AND teacher_id=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $schedule_id, $teacher_id);
+                }
+                
+                if ($stmt->execute()) {
+                    $success = "Schedule updated successfully!";
+                    header("Location: myschedule.php?success=1");
+                    exit;
+                } else {
+                    $error = "Error updating schedule: " . $conn->error;
+                }
             }
         }
     }
@@ -137,36 +235,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (empty($section) || empty($subject_code) || empty($day) || empty($start_time) || empty($end_time) || empty($type) || empty($room)) {
             $error = "All fields are required!";
         } else {
-            $unique_code = strtoupper(str_replace(' ', '', $section . '-' . $subject_code));
-
-            // Check if building and campus columns exist before including them
-            $sql = "SHOW COLUMNS FROM class_schedules LIKE 'building'";
-            $result = $conn->query($sql);
-            $has_building = ($result->num_rows > 0);
-            
-            $sql = "SHOW COLUMNS FROM class_schedules LIKE 'campus'";
-            $result = $conn->query($sql);
-            $has_campus = ($result->num_rows > 0);
-
-            if ($has_building && $has_campus) {
-                $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, campus, building, room, color, unique_code)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("isssssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $unique_code);
+            // Check for schedule conflicts
+            $conflicts = checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time);
+            if (!empty($conflicts)) {
+                $error = "Schedule conflicts with existing classes: ";
+                foreach ($conflicts as $conflict) {
+                    $error .= $conflict['subject_code'] . " (" . $conflict['section'] . ") ";
+                }
             } else {
-                // Fallback without building and campus
-                $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, room, color, unique_code) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("isssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $unique_code);
-            }
-            
-            if ($stmt->execute()) {
-                $success = "Schedule added successfully!";
-                header("Location: myschedule.php?success=1");
-                exit;
-            } else {
-                $error = "Error adding schedule: " . $conn->error;
+                $unique_code = strtoupper(str_replace(' ', '', $section . '-' . $subject_code));
+
+                // Check if building and campus columns exist before including them
+                $sql = "SHOW COLUMNS FROM class_schedules LIKE 'building'";
+                $result = $conn->query($sql);
+                $has_building = ($result->num_rows > 0);
+                
+                $sql = "SHOW COLUMNS FROM class_schedules LIKE 'campus'";
+                $result = $conn->query($sql);
+                $has_campus = ($result->num_rows > 0);
+
+                if ($has_building && $has_campus) {
+                    $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, campus, building, room, color, unique_code)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("isssssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $unique_code);
+                } else {
+                    // Fallback without building and campus
+                    $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, room, color, unique_code) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("isssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $unique_code);
+                }
+                
+                if ($stmt->execute()) {
+                    $success = "Schedule added successfully!";
+                    header("Location: myschedule.php?success=1");
+                    exit;
+                } else {
+                    $error = "Error adding schedule: " . $conn->error;
+                }
             }
         }
     }
@@ -245,6 +352,25 @@ $has_campus = ($result->num_rows > 0);
       </div>
     <?php endif; ?>
 
+    <!-- Schedule Conflict Warning -->
+    <?php if (!empty($schedule_conflicts) && $show_conflict_notification): ?>
+      <div class="conflict-warning dismissible">
+        <div class="conflict-warning-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="conflict-warning-text">
+            <strong>Schedule Conflict Detected!</strong> You have overlapping classes in your schedule. 
+            Please review your classes below.
+          </div>
+        </div>
+        <form method="POST" action="" class="dismiss-form">
+          <input type="hidden" name="dismiss_conflict_notification" value="1">
+          <button type="submit" class="dismiss-btn" title="Dismiss for 24 hours">
+            <i class="fas fa-times"></i>
+          </button>
+        </form>
+      </div>
+    <?php endif; ?>
+
     <!-- View Toggle -->
     <div class="view-toggle">
       <button id="tableViewBtn" class="active"><i class="fas fa-table"></i> Table View</button>
@@ -271,8 +397,20 @@ $has_campus = ($result->num_rows > 0);
         <tbody>
           <?php if ($schedules): ?>
             <?php foreach ($schedules as $c): ?>
-              <tr class="schedule-row" data-schedule-id="<?= $c['id'] ?>">
-                <td><?= $c['subject_code']; ?></td>
+              <?php 
+              // Check for conflicts for this schedule
+              $conflicts = checkScheduleConflict($conn, $teacher_id, $c['day'], $c['start_time'], $c['end_time'], $c['id']);
+              $hasConflict = !empty($conflicts);
+              ?>
+              <tr class="schedule-row <?= $hasConflict ? 'has-conflict' : '' ?>" data-schedule-id="<?= $c['id'] ?>">
+                <td>
+                  <?= $c['subject_code']; ?>
+                  <?php if ($hasConflict): ?>
+                    <span class="conflict-badge" title="Schedule conflict">
+                      <i class="fas fa-exclamation-triangle"></i>
+                    </span>
+                  <?php endif; ?>
+                </td>
                 <td><?= $c['section']; ?></td>
                 <td><?= $c['day']; ?></td>
                 <td><?= date("H:i", strtotime($c['start_time'])); ?></td>
@@ -549,6 +687,7 @@ $has_campus = ($result->num_rows > 0);
 <script>
 // Pass PHP data to JavaScript
 window.schedules = <?php echo json_encode($schedules); ?>;
+window.dayMap = {Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6};
 </script>
 <script src="../assets/js/teachermyschedule.js"></script>
 </body>

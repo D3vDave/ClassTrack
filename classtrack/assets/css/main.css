@@ -1583,3 +1583,266 @@ header {
         padding: 10px 18px;
     }
 }
+
+/* Overlap warning styles */
+.overlap-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.overlap-warning i {
+    color: #f39c12;
+}
+
+.overlap-warning-details {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.overlap-warning-details i {
+    color: #f39c12;
+}
+
+.schedule-item.overlapping {
+    border: 2px dashed #e74c3c;
+    position: relative;
+}
+
+.overlap-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #e74c3c;
+    font-size: 12px;
+}
+
+/* Enhanced schedule item for better overlap visibility */
+.schedule-item {
+    background: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    border-left: 4px solid #1a73e8;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.schedule-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.schedule-item.overlapping:hover {
+    border-color: #e74c3c;
+}
+
+/* Conflict indicators for table view */
+.conflict-badge {
+    color: #e74c3c;
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+tr.has-conflict {
+    background-color: #fff9f9;
+}
+
+tr.has-conflict:hover {
+    background-color: #ffe6e6;
+}
+
+.conflict-warning {
+    background: #ffe6e6;
+    border: 1px solid #ffcccc;
+    color: #d63031;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.conflict-warning i {
+    color: #e74c3c;
+    margin-right: 8px;
+}
+
+/* Day cell styling for weekly view */
+.day-cell {
+    background: #f9f9f9;
+    min-height: 200px;
+    border-radius: 6px;
+    padding: 10px;
+    position: relative;
+    border: 1px solid #e0e0e0;
+}
+
+.day-cell.has-overlaps {
+    background: #fff9f9;
+    border-color: #ffcccc;
+}
+
+/* Dismissible conflict warning styles */
+.conflict-warning.dismissible {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #ffe6e6;
+    border: 1px solid #ffcccc;
+    color: #d63031;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+}
+
+.conflict-warning-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.conflict-warning-text {
+    margin-left: 10px;
+}
+
+.dismiss-form {
+    margin: 0;
+    padding: 0;
+}
+
+.dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #d63031;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.dismiss-btn:hover {
+    background: rgba(214, 48, 49, 0.1);
+    transform: scale(1.1);
+}
+
+.dismiss-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animation for slide in */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Conflict warning styles */
+.conflict-warning {
+    background: #ffe6e6;
+    border: 1px solid #ffcccc;
+    color: #d63031;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.conflict-warning i {
+    color: #e74c3c;
+    font-size: 18px;
+}
+
+.overlap-warning-details {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.overlap-warning-details i {
+    color: #f39c12;
+}
+
+.conflict-badge {
+    color: #e74c3c;
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+tr.has-conflict {
+    background-color: #fff9f9;
+}
+
+tr.has-conflict:hover {
+    background-color: #ffe6e6;
+}
+
+.class-box.has-conflict {
+    border-left-color: #e74c3c !important;
+}
+
+.schedule-item.overlapping {
+    border: 2px dashed #e74c3c;
+    position: relative;
+}
+
+.overlap-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #e74c3c;
+    font-size: 12px;
+}
+
+.overlap-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

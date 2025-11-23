@@ -58,27 +58,115 @@ function generateUniqueCode($section, $subject_code, $conn) {
     return $code;
 }
 
+// Function to check for schedule conflicts
+function checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time, $exclude_id = null) {
+    $sql = "SELECT * FROM class_schedules 
+            WHERE teacher_id = ? AND day = ? 
+            AND ((start_time < ? AND end_time > ?) OR 
+                 (start_time < ? AND end_time > ?) OR
+                 (start_time >= ? AND end_time <= ?))";
+    
+    $params = [$teacher_id, $day, $end_time, $start_time, $end_time, $start_time, $start_time, $end_time];
+    
+    if ($exclude_id) {
+        $sql .= " AND id != ?";
+        $params[] = $exclude_id;
+    }
+    
+    $stmt = $conn->prepare($sql);
+    
+    // Create type string based on number of parameters
+    $types = str_repeat("s", count($params));
+    $stmt->bind_param($types, ...$params);
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Function to check for teacher schedule conflicts
+function checkTeacherScheduleConflict($conn, $teacher_id, $exclude_id = null) {
+    $sql = "SELECT cs1.*, cs2.* 
+            FROM class_schedules cs1
+            JOIN class_schedules cs2 ON cs1.teacher_id = cs2.teacher_id
+            WHERE cs1.teacher_id = ? 
+            AND cs1.day = cs2.day 
+            AND cs1.id != cs2.id
+            AND ((cs1.start_time < cs2.end_time AND cs1.end_time > cs2.start_time))";
+    
+    $params = [$teacher_id];
+    
+    if ($exclude_id) {
+        $sql .= " AND cs1.id != ? AND cs2.id != ?";
+        $params[] = $exclude_id;
+        $params[] = $exclude_id;
+    }
+    
+    $sql .= " GROUP BY cs1.id, cs2.id";
+    
+    $stmt = $conn->prepare($sql);
+    
+    // Create type string based on number of parameters
+    $types = str_repeat("i", count($params));
+    if ($types) {
+        $stmt->bind_param($types, ...$params);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Handle dismissing conflict notification
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['dismiss_conflict_notification'])) {
+    $_SESSION['teacher_conflict_notification_dismissed'] = true;
+    $_SESSION['teacher_conflict_notification_dismissed_time'] = time();
+    header("Location: dashboard.php");
+    exit;
+}
+
+// Check if notification was dismissed (expires after 24 hours)
+$show_conflict_notification = true;
+if (isset($_SESSION['teacher_conflict_notification_dismissed']) && $_SESSION['teacher_conflict_notification_dismissed']) {
+    $dismissed_time = $_SESSION['teacher_conflict_notification_dismissed_time'] ?? 0;
+    $current_time = time();
+    $hours_passed = ($current_time - $dismissed_time) / 3600;
+    
+    // Show notification again after 24 hours
+    if ($hours_passed < 24) {
+        $show_conflict_notification = false;
+    } else {
+        // Reset dismissal after 24 hours
+        unset($_SESSION['teacher_conflict_notification_dismissed']);
+        unset($_SESSION['teacher_conflict_notification_dismissed_time']);
+    }
+}
+
+// Check for schedule conflicts
+$conflicts = checkTeacherScheduleConflict($conn, $teacher_id);
+
 // Handle form submission for creating schedule
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['announcement'])) {
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-    $schedule_id = $_POST['schedule_id'];
-    $is_important = isset($_POST['is_important']) ? 1 : 0;
-    $start_date = $_POST['start_date'];
-    $start_time = $_POST['start_time'];
-    $end_date = $_POST['end_date'];
-    $end_time = $_POST['end_time'];
+        $title = $_POST['title'];
+        $content = $_POST['content'];
+        $schedule_id = $_POST['schedule_id'];
+        $is_important = isset($_POST['is_important']) ? 1 : 0;
+        $start_date = $_POST['start_date'];
+        $start_time = $_POST['start_time'];
+        $end_date = $_POST['end_date'];
+        $end_time = $_POST['end_time'];
 
-    $table_check = $conn->query("SHOW TABLES LIKE 'announcements'");
-    if ($table_check->num_rows > 0) {
-        $sql = "INSERT INTO announcements (teacher_id, class_id, title, content, is_important, start_date, start_time, end_date, end_time, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iississss", $teacher_id, $schedule_id, $title, $content, $is_important, $start_date, $start_time, $end_date, $end_time);
-        
-        if ($stmt->execute()) {
-            $success = "Announcement created successfully!";
+        $table_check = $conn->query("SHOW TABLES LIKE 'announcements'");
+        if ($table_check->num_rows > 0) {
+            $sql = "INSERT INTO announcements (teacher_id, class_id, title, content, is_important, start_date, start_time, end_date, end_time, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iississss", $teacher_id, $schedule_id, $title, $content, $is_important, $start_date, $start_time, $end_date, $end_time);
+            
+            if ($stmt->execute()) {
                 $success = "Announcement created successfully!";
             } else {
                 $error = "Error creating announcement: " . $conn->error;
@@ -98,32 +186,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $room = $_POST['room'];
         $color = $_POST['color'] ?? '#e3e9ff';
 
-        // Check if building and campus columns exist
-        $check_building = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'building'");
-        $has_building = ($check_building->num_rows > 0);
-        
-        $check_campus = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'campus'");
-        $has_campus = ($check_campus->num_rows > 0);
+        // Check for schedule conflicts
+        $conflicts = checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time, $schedule_id);
+        if (!empty($conflicts)) {
+            $error = "Schedule conflicts with existing classes: ";
+            foreach ($conflicts as $conflict) {
+                $error .= $conflict['subject_code'] . " (" . $conflict['section'] . ") ";
+            }
+        } else {
+            // Check if building and campus columns exist
+            $check_building = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'building'");
+            $has_building = ($check_building->num_rows > 0);
+            
+            $check_campus = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'campus'");
+            $has_campus = ($check_campus->num_rows > 0);
 
-        if ($has_building && $has_campus) {
-            $campus = $_POST['campus'];
-            $building = $_POST['building'];
-            $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, campus=?, building=?, room=?, color=? WHERE id=? AND teacher_id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $schedule_id, $teacher_id);
-        } else {
-            // Fallback without building and campus
-            $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, room=?, color=? WHERE id=? AND teacher_id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $schedule_id, $teacher_id);
-        }
-        
-        if ($stmt->execute()) {
-            $success = "Schedule updated successfully!";
-            header("Location: dashboard.php?success=1");
-            exit;
-        } else {
-            $error = "Error updating schedule: " . $conn->error;
+            if ($has_building && $has_campus) {
+                $campus = $_POST['campus'];
+                $building = $_POST['building'];
+                $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, campus=?, building=?, room=?, color=? WHERE id=? AND teacher_id=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $schedule_id, $teacher_id);
+            } else {
+                // Fallback without building and campus
+                $sql = "UPDATE class_schedules SET section=?, subject_code=?, day=?, start_time=?, end_time=?, type=?, room=?, color=? WHERE id=? AND teacher_id=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssssssssii", $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $schedule_id, $teacher_id);
+            }
+            
+            if ($stmt->execute()) {
+                $success = "Schedule updated successfully!";
+                header("Location: dashboard.php?success=1");
+                exit;
+            } else {
+                $error = "Error updating schedule: " . $conn->error;
+            }
         }
     } else if (isset($_POST['delete_schedule'])) {
         // Handle schedule deletion
@@ -151,37 +248,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $room = $_POST['room'];
         $color = $_POST['color'] ?? '#e3e9ff';
 
-        // Generate unique code
-        $unique_code = generateUniqueCode($section, $subject_code, $conn);
-
-        // Check if building and campus columns exist
-        $check_building = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'building'");
-        $has_building = ($check_building->num_rows > 0);
-        
-        $check_campus = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'campus'");
-        $has_campus = ($check_campus->num_rows > 0);
-
-        if ($has_building && $has_campus) {
-            $campus = $_POST['campus'];
-            $building = $_POST['building'];
-            $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, campus, building, room, color, unique_code) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isssssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $unique_code);
+        // Check for schedule conflicts
+        $conflicts = checkScheduleConflict($conn, $teacher_id, $day, $start_time, $end_time);
+        if (!empty($conflicts)) {
+            $error = "Schedule conflicts with existing classes: ";
+            foreach ($conflicts as $conflict) {
+                $error .= $conflict['subject_code'] . " (" . $conflict['section'] . ") ";
+            }
         } else {
-            // Fallback without building and campus
-            $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, room, color, unique_code) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $unique_code);
-        }
-        
-        if ($stmt->execute()) {
-            $success = "Schedule added successfully! Unique Code: <strong>$unique_code</strong>";
-            header("Location: dashboard.php?success=1&code=" . urlencode($unique_code));
-            exit;
-        } else {
-            $error = "Error adding schedule: " . $conn->error;
+            // Generate unique code
+            $unique_code = generateUniqueCode($section, $subject_code, $conn);
+
+            // Check if building and campus columns exist
+            $check_building = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'building'");
+            $has_building = ($check_building->num_rows > 0);
+            
+            $check_campus = $conn->query("SHOW COLUMNS FROM class_schedules LIKE 'campus'");
+            $has_campus = ($check_campus->num_rows > 0);
+
+            if ($has_building && $has_campus) {
+                $campus = $_POST['campus'];
+                $building = $_POST['building'];
+                $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, campus, building, room, color, unique_code) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("isssssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $campus, $building, $room, $color, $unique_code);
+            } else {
+                // Fallback without building and campus
+                $sql = "INSERT INTO class_schedules (teacher_id, section, subject_code, day, start_time, end_time, type, room, color, unique_code) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("isssssssss", $teacher_id, $section, $subject_code, $day, $start_time, $end_time, $type, $room, $color, $unique_code);
+            }
+            
+            if ($stmt->execute()) {
+                $success = "Schedule added successfully! Unique Code: <strong>$unique_code</strong>";
+                header("Location: dashboard.php?success=1&code=" . urlencode($unique_code));
+                exit;
+            } else {
+                $error = "Error adding schedule: " . $conn->error;
+            }
         }
     }
 }
@@ -294,13 +400,45 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
       </div>
     <?php endif; ?>
 
+    <!-- Schedule Conflict Warning -->
+    <?php if (!empty($conflicts) && $show_conflict_notification): ?>
+      <div class="conflict-warning dismissible">
+        <div class="conflict-warning-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="conflict-warning-text">
+            <strong>Schedule Conflict Detected!</strong> You have overlapping classes in your schedule.
+            <a href="myschedule.php" style="margin-left: 10px; color: #d63031; text-decoration: underline;">
+              View Schedule
+            </a>
+          </div>
+        </div>
+        <form method="POST" action="" class="dismiss-form">
+          <input type="hidden" name="dismiss_conflict_notification" value="1">
+          <button type="submit" class="dismiss-btn" title="Dismiss for 24 hours">
+            <i class="fas fa-times"></i>
+          </button>
+        </form>
+      </div>
+    <?php endif; ?>
+
     <section class="cards">
       <div class="card">
         <h3><i class="fas fa-calendar-day"></i> Today's Classes</h3>
         <?php if ($todays_classes): ?>
           <?php foreach ($todays_classes as $c): ?>
-            <div class="class-box" style="background-color: <?= $c['color'] ?? '#f0f6ff' ?>; border-left-color: <?= $c['color'] ?? '#1a73e8' ?>;" data-schedule-id="<?= $c['id'] ?>">
-              <h4><?= $c['subject_code']; ?></h4>
+            <?php 
+            // Check for conflicts for this schedule
+            $conflicts = checkScheduleConflict($conn, $teacher_id, $c['day'], $c['start_time'], $c['end_time'], $c['id']);
+            $hasConflict = !empty($conflicts);
+            ?>
+            <div class="class-box <?= $hasConflict ? 'has-conflict' : '' ?>" style="background-color: <?= $c['color'] ?? '#f0f6ff' ?>; border-left-color: <?= $hasConflict ? '#e74c3c' : ($c['color'] ?? '#1a73e8') ?>;" data-schedule-id="<?= $c['id'] ?>">
+              <h4><?= $c['subject_code']; ?>
+                <?php if ($hasConflict): ?>
+                  <span class="conflict-badge" title="Schedule conflict">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </span>
+                <?php endif; ?>
+              </h4>
               <p><?= $c['section']; ?></p>
               <p><?= date("H:i", strtotime($c['start_time'])) . " - " . date("H:i", strtotime($c['end_time'])); ?> | <?= $c['room']; ?></p>
               <span class="tag"><?= $c['type']; ?></span>
@@ -320,8 +458,19 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
         <h3><i class="fas fa-calendar-week"></i> Upcoming Classes</h3>
         <?php if ($upcoming_classes): ?>
           <?php foreach ($upcoming_classes as $c): ?>
-            <div class="class-box" style="background-color: <?= $c['color'] ?? '#f0f6ff' ?>; border-left-color: <?= $c['color'] ?? '#1a73e8' ?>;" data-schedule-id="<?= $c['id'] ?>">
-              <h4><?= $c['subject_code']; ?></h4>
+            <?php 
+            // Check for conflicts for this schedule
+            $conflicts = checkScheduleConflict($conn, $teacher_id, $c['day'], $c['start_time'], $c['end_time'], $c['id']);
+            $hasConflict = !empty($conflicts);
+            ?>
+            <div class="class-box <?= $hasConflict ? 'has-conflict' : '' ?>" style="background-color: <?= $c['color'] ?? '#f0f6ff' ?>; border-left-color: <?= $hasConflict ? '#e74c3c' : ($c['color'] ?? '#1a73e8') ?>;" data-schedule-id="<?= $c['id'] ?>">
+              <h4><?= $c['subject_code']; ?>
+                <?php if ($hasConflict): ?>
+                  <span class="conflict-badge" title="Schedule conflict">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </span>
+                <?php endif; ?>
+              </h4>
               <p><?= $c['section']; ?></p>
               <p><?= date("H:i", strtotime($c['start_time'])) . " - " . date("H:i", strtotime($c['end_time'])); ?></p>
               <span class="day"><?= $c['day']; ?></span>
@@ -345,9 +494,20 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
         <div class="codes-list">
           <?php foreach ($schedules as $schedule): ?>
             <?php if (isset($schedule['unique_code'])): ?>
-              <div class="code-item">
+              <?php 
+              // Check for conflicts for this schedule
+              $conflicts = checkScheduleConflict($conn, $teacher_id, $schedule['day'], $schedule['start_time'], $schedule['end_time'], $schedule['id']);
+              $hasConflict = !empty($conflicts);
+              ?>
+              <div class="code-item <?= $hasConflict ? 'has-conflict' : '' ?>">
                 <div class="code-info">
-                  <strong><?= $schedule['subject_code']; ?> - <?= $schedule['section']; ?></strong>
+                  <strong><?= $schedule['subject_code']; ?> - <?= $schedule['section']; ?>
+                    <?php if ($hasConflict): ?>
+                      <span class="conflict-badge" title="Schedule conflict">
+                        <i class="fas fa-exclamation-triangle"></i>
+                      </span>
+                    <?php endif; ?>
+                  </strong>
                   <span class="code"><?= $schedule['unique_code']; ?></span>
                 </div>
                 <div class="code-actions">
@@ -482,7 +642,7 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
       <button class="btn-edit" id="editSchedule"><i class="fas fa-edit"></i> Edit</button>
       <button class="btn-delete" id="deleteSchedule"><i class="fas fa-trash"></i> Delete</button>
       <button class="btn-announcement" id="createAnnouncement"><i class="fas fa-bullhorn"></i> Make Announcement</button>
-      <button class="btn-copy-code" id="copyClassCode" onclick="copyJoinCode()"><i class="fas fa-copy"></i> Copy Join Code</button>
+      <button class="btn-copy-code" id="copyClassCode"><i class="fas fa-copy"></i> Copy Join Code</button>
       <button class="btn-close" id="closeDetailsBtn"><i class="fas fa-times"></i> Close</button>
     </div>
     
@@ -584,7 +744,7 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
       <div class="toggle-important">
         <input type="checkbox" name="is_important" id="important-toggle">
         <span>Mark as Important</span>
-      
+      </div>
       <div class="form-actions">
         <button type="button" id="cancelAnnouncement">Cancel</button>
         <button type="submit">Create Announcement</button>
@@ -618,72 +778,7 @@ if (isset($_GET['success']) && isset($_GET['code'])) {
 // Pass PHP data to JavaScript
 window.schedules = <?php echo json_encode($schedules); ?>;
 window.dayMap = {Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6};
-
-// Copy code functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Copy buttons in the codes list
-    document.querySelectorAll('.btn-copy').forEach(button => {
-        button.addEventListener('click', function() {
-            const code = this.getAttribute('data-code');
-            navigator.clipboard.writeText(code).then(() => {
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                }, 2000);
-            });
-        });
-    });
-
-    // Copy code button in schedule details
-    document.getElementById('copyClassCode')?.addEventListener('click', function() {
-        const scheduleId = document.getElementById('editScheduleId')?.value;
-        if (scheduleId) {
-            const schedule = window.schedules.find(s => s.id == scheduleId);
-            if (schedule && schedule.unique_code) {
-                navigator.clipboard.writeText(schedule.unique_code).then(() => {
-                    const button = this;
-                    const originalText = button.innerHTML;
-                    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                    setTimeout(() => {
-                        button.innerHTML = originalText;
-                    }, 2000);
-                });
-            }
-        }
-    });
-});
-
-// Function to copy the unique class code from the modal
-function copyJoinCode() {
-    // Find the code text inside your modal
-    const codeElement = document.querySelector('.unique-code');
-    if (!codeElement) {
-        alert("No join code found.");
-        return;
-    }
-
-    const codeText = codeElement.textContent.trim();
-
-    // Use Clipboard API if available
-    navigator.clipboard.writeText(codeText)
-        .then(() => {
-            // Optional feedback (use alert or console/log)
-            alert("Copied Join Code: " + codeText);
-        })
-        .catch(() => {
-            // Fallback method if Clipboard API fails
-            const tempInput = document.createElement("input");
-            tempInput.value = codeText;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            alert("Copied Join Code: " + codeText);
-        });
-}
 </script>
-
 <script src="../assets/js/teacherdashboard.js"></script>
 </body>
 </html>
